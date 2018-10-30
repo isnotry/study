@@ -51,21 +51,17 @@ Page({
     this.qqmapsdk = new QQMapWX({
       key: '7RVBZ-N7AKU-X2XVC-BD3B4-RIJOJ-FDBRY'
     })
-    this.getNow()
-  },
-
-  onShow(){
     wx.getSetting({
       success: res=>{
         let auth = res.authSetting['scope.userLocation']
-        if (auth && this.data.locationAuthType !== AUTHORIZED){
-          // 权限从无到有
-          this.setData({
-            locationAuthType: AUTHORIZED,
-            locationTipsText: AUTHORIZED_TIPS
-          })
-          this.getLocation()
-        }
+        this.setData({
+          locationAuthType: auth ? AUTHORIZED : (auth === false) ? UNAUTHORIZED : UNPROMPTED,
+          locationTipsText: auth ? AUTHORIZED_TIPS : (auth === false) ? UNAUTHORIZED_TIPS : UNPROMPTED_TIPS  
+        })
+        if (auth)
+          this.getCityAndWeather()
+        else
+          this.getNow()
       }
     })
   },
@@ -109,7 +105,6 @@ Page({
   },
 
   setHourlyWeather(result){
-    //console.log(result)
     let forecast = result.forecast
     let nowHour = new Date().getHours()
     let hourlyWeather = []
@@ -146,12 +141,19 @@ Page({
 
   onTapLocation(){
     if (this.data.locationAuthType === UNAUTHORIZED)
-      wx.openSetting()
+      wx.openSetting({
+        success: res=>{
+          let auth = res.authSetting['scope.userLocation']
+          if(auth){
+            this.getCityAndWeather()
+          }
+        }
+      })
     else 
-      this.getLocation()
+      this.getCityAndWeather()
   },
 
-  getLocation(){
+  getCityAndWeather(){
     wx.getLocation({
       success:res => {
         locationAuthType: AUTHORIZED
@@ -163,7 +165,6 @@ Page({
           },
           success: res => {
             let city = res.result.address_component.city
-            console.log(city)
             this.setData({
               city: city,
               locationTipsText: AUTHORIZED_TIPS
