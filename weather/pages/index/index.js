@@ -18,6 +18,14 @@ const weatherColorMap = {
 
 const QQMapWX = require('../../libs/qqmap-wx-jssdk.js')
 
+const UNPROMPTED = 0
+const UNAUTHORIZED = 1
+const AUTHORIZED = 2
+
+const UNPROMPTED_TIPS = "点击获取当前位置"
+const UNAUTHORIZED_TIPS = "点击开启位置权限"
+const AUTHORIZED_TIPS = ""
+
 Page({
 
   /**
@@ -31,7 +39,8 @@ Page({
     todayTemp:'',
     todayDate:'',
     city: '广州市',
-    locationTipsText: '点击获取当前位置'
+    locationAuthType: UNPROMPTED,
+    locationTipsText: UNPROMPTED_TIPS
   },
 
   /**
@@ -45,6 +54,21 @@ Page({
     this.getNow()
   },
 
+  onShow(){
+    wx.getSetting({
+      success: res=>{
+        let auth = res.authSetting['scope.userLocation']
+        if (auth && this.data.locationAuthType !== AUTHORIZED){
+          // 权限从无到有
+          this.setData({
+            locationAuthType: AUTHORIZED,
+            locationTipsText: AUTHORIZED_TIPS
+          })
+          this.getLocation()
+        }
+      }
+    })
+  },
 
   /**
      * 获取当前天气
@@ -121,9 +145,17 @@ Page({
   },
 
   onTapLocation(){
+    if (this.data.locationAuthType === UNAUTHORIZED)
+      wx.openSetting()
+    else 
+      this.getLocation()
+  },
+
+  getLocation(){
     wx.getLocation({
       success:res => {
-        //console.log(res.latitude,res.longitude)
+        locationAuthType: AUTHORIZED
+        locationTipsText: AUTHORIZED_TIPS
         this.qqmapsdk.reverseGeocoder({
           location:{
             latitude: res.latitude,
@@ -134,15 +166,16 @@ Page({
             console.log(city)
             this.setData({
               city: city,
-              locationTipsText: ""
+              locationTipsText: AUTHORIZED_TIPS
             })
             this.getNow()
           }
         })
       },
       fail: () => {
-        wx.showToast({
-          title: 'fail',
+        this.setData({
+          locationAuthType: UNAUTHORIZED,
+          locationTipsText: UNAUTHORIZED_TIPS
         })
       }
     })
