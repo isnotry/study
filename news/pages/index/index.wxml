@@ -1,0 +1,15 @@
+<!--index.wxml-->
+<view class="container">
+  <view class="tap-item" wx:for="{{1,2,3,4,5}}" >
+    国内国际财经娱乐军事体育其他
+    
+  </view>
+  <view class="big-news">
+  
+  </view>
+  <view class="news-list">
+    <view class="news-item">
+    
+    </view>
+  </view>
+</view>
